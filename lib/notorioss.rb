@@ -32,7 +32,7 @@ module Notorioss
     end
 
     def self.run(args = ARGV)
-      options = { format: "table" }
+      options = {format: "table"}
       option_parser(options).parse!(args)
 
       licenses = []
@@ -54,7 +54,7 @@ module Notorioss
     end
 
     def self.tableize(licenses)
-      table = Terminal::Table.new headings: %w[License Count Licenses], style: { all_separators: true }
+      table = Terminal::Table.new headings: %w[License Count Licenses], style: {all_separators: true}
 
       types = licenses.map { _1.type }.uniq
 

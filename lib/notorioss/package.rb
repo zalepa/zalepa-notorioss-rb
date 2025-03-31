@@ -3,8 +3,8 @@ module Notorioss
     attr_accessor :type, :name, :version
 
     def initialize(type, name, version)
-      @type    = type
-      @name    = name
+      @type = type
+      @name = name
       @version = version
     end
   end

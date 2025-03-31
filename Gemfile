@@ -11,3 +11,5 @@ gem "rubocop", "~> 1.21"
 gem "terminal-table", "~> 4.0"
 
 gem "rainbow", "~> 3.1"
+
+gem "standard", ">= 1.35.1"
