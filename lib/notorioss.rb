@@ -15,7 +15,7 @@ module Notorioss
       @option_parser ||= OptionParser.new do |opts|
         opts.banner = "Usage: notorioss [options]"
 
-        opts.on("-f", "--format FORMAT", %w[table summary json], "Output format (table, summary, json)") do |format|
+        opts.on("-f", "--format FORMAT", %w[table summary report], "Output format (table, summary, report)") do |format|
           options[:format] = format
         end
 
@@ -32,7 +32,7 @@ module Notorioss
     end
 
     def self.run(args = ARGV)
-      options = {format: "table"}
+      options = { format: "table" }
       option_parser(options).parse!(args)
 
       licenses = []
@@ -50,11 +50,90 @@ module Notorioss
         tableize(licenses)
       when "summary"
         summarize(licenses)
+      when "report"
+        reportize(licenses)
+      end
+    end
+
+    def self.reportize(licenses)
+      table = Terminal::Table.new headings: %w[License Count], style: { border: :markdown }
+
+      types = licenses.map { _1.type }.uniq
+
+      types.each do |t|
+        table.add_row [t, licenses.filter { _1.type == t }.count]
+      end
+
+      puts "# NotoriOSS Found the following licenses"
+      puts table
+
+      puts "\n## High-Risk Analysis\n"
+
+      high_risk = licenses.filter { _1.risk == :high }
+
+      if high_risk.count.positive?
+        puts "\n\nWe found the following high-risk libraries:"
+        types = high_risk.map { _1.type }.uniq
+        types.each do |t|
+          pkgs = high_risk.filter { _1.type == t }
+          puts "\n### #{t} (#{pkgs.count})"
+          pkgs.each { puts "* #{_1.formatted_name}" }
+        end
+      else
+        puts "\n\nWe did not find any clearly high-risk libraries."
+      end
+
+      puts "\n## Medium-Risk Analysis\n"
+
+      medium_risk = licenses.filter { _1.risk == :medium }
+
+      if medium_risk.count.positive?
+        puts "\n\nWe found the following medium-risk libraries:"
+        types = medium_risk.map { _1.type }.uniq
+        types.each do |t|
+          pkgs = medium_risk.filter { _1.type == t }
+          puts "\n### #{t} (#{pkgs.count})"
+          pkgs.each { puts "* #{_1.formatted_name}" }
+        end
+      else
+        puts "\n\nWe did not find any clearly medium-risk libraries."
+      end
+
+      puts "\n## Low-Risk Analysis\n"
+
+      low_risk = licenses.filter { _1.risk == :low }
+
+      if low_risk.count.positive?
+        puts "\n\nWe found the following low-risk libraries:"
+        types = low_risk.map { _1.type }.uniq
+        types.each do |t|
+          pkgs = low_risk.filter { _1.type == t }
+          puts "\n### #{t} (#{pkgs.count})"
+          pkgs.each { puts "* #{_1.formatted_name}" }
+        end
+      else
+        puts "\n\nWe did not find any clearly low-risk libraries."
+      end
+
+      puts "\n## Unknown Risk Analysis\n"
+
+      unknown_risk = licenses.filter { _1.risk == :unknown }
+
+      if unknown_risk.count.positive?
+        puts "\n\nWe found the following unknown libraries:"
+        types = unknown_risk.map { _1.type }.uniq
+        types.each do |t|
+          pkgs = unknown_risk.filter { _1.type == t }
+          puts "\n### #{t} (#{pkgs.count})"
+          pkgs.each { puts "* #{_1.formatted_name}" }
+        end
+      else
+        puts "\n\nWe did not find any unknown libraries."
       end
     end
 
     def self.tableize(licenses)
-      table = Terminal::Table.new headings: %w[License Count Licenses], style: {all_separators: true}
+      table = Terminal::Table.new headings: %w[License Count Licenses], style: { all_separators: true }
 
       types = licenses.map { _1.type }.uniq
 
