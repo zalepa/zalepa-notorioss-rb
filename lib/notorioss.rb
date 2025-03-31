@@ -3,12 +3,39 @@
 require_relative "notorioss/version"
 require "terminal-table"
 require "rainbow"
+require "optparse"
 
 module Notorioss
   class Error < StandardError; end
 
   class CLI
-    def self.run
+    def self.run(args = ARGV)
+      options = {
+        format: "table"
+      }
+
+      option_parser = OptionParser.new do |opts|
+        opts.banner = "Usage: notorioss [options]"
+
+        opts.on("-f", "--format FORMAT", %w[table summary json],
+                "Output format (table, summary, json)") do |format|
+          options[:format] = format
+        end
+
+        opts.on("-h", "--help", "Show this help message") do
+          puts opts
+          exit
+        end
+
+        opts.on("-v", "--version", "Show version") do
+          puts "Notorioss version #{Notorioss::VERSION}"
+          exit
+        end
+      end
+
+      # Parse the command-line arguments
+      option_parser.parse!(args)
+
       puts "Analyzing Gemfile licenses..."
 
       require "bundler"
@@ -22,7 +49,12 @@ module Notorioss
       end
 
       # summarize(licenses)
-      tableize(licenses)
+      case options[:format]
+      when "table"
+        tableize(licenses)
+      when "summary"
+        summarize(licenses)
+      end
     end
 
     def self.tableize(licenses)
