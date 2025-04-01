@@ -19,6 +19,10 @@ module Notorioss
           options[:format] = format
         end
 
+        opts.on("-n", "--notice", "Generate a NOTICE file in the current directory") do
+          options[:notice] = true
+        end
+
         opts.on("-h", "--help", "Show this help message") do
           puts opts
           exit
@@ -32,16 +36,36 @@ module Notorioss
     end
 
     def self.run(args = ARGV)
-      options = { format: "table" }
+      options = { format: "table", notice: false }
       option_parser(options).parse!(args)
 
       licenses = []
 
       Bundler.definition.specs.each do |spec|
-        licenses << Notorioss::Package.new(spec.license || "unknown", spec.name, spec.version)
+        license_file = Dir[File.join(spec.full_gem_path,
+                                     "{*-license, license,license.txt,license.md, *-LICENSE, LICENSE,LICENSE.txt,LICENSE.md,COPYING,NOTICE,NOTICE.txt}")].first
+        license_text = File.read(license_file) if license_file
+
+        # TODO: check README for license text
+        # TODO: checking inconsistent license placement
+
+        licenses << Notorioss::Package.new(spec.license || "unknown", spec.name, spec.version, spec.authors,
+                                           license_text)
       end
 
       output(licenses, options)
+
+      generate_notices(licenses) if options[:notice]
+    end
+
+    def self.generate_notices(licenses)
+      licenses.each do |license|
+        # next unless license.license_text.nil? # for debugging
+
+        puts "# #{license.formatted_name}"
+        puts "Authors: #{license.authors.join(", ")}"
+        puts license.license_text
+      end
     end
 
     def self.output(licenses, options)
